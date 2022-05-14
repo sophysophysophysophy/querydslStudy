@@ -673,4 +673,59 @@ public class QuerydslBasicTest {
     private BooleanExpression allEq(String usernameCond, Integer ageCond) {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
+
+    @Test
+    void bulkUpdate() {
+
+        //member1 = 10 -> 비회원
+        //member2 = 20 -> 비회원
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+        // 업데이트한 결과 데이터 가져와도 영속성 컨텍스트에 있는 데이터와 다르면 DB에서 퍼오른 데이터 버림.
+//            영속성 컨텍스트가 항상 우위를 가짐
+//            따라서 벌크 연산 후 영속성 컨텍스트 동기화 필수!!
+        em.flush();
+        em.clear();
+
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member member1 : result) {
+            System.out.println("member1 = " + member1);
+            //영속성 컨텍스트 데이터 출력.
+            // 업데이트한 결과 데이터 가져와도 영속성 컨텍스트에 있는 데이터와 다르면 DB에서 퍼오른 데이터 버림.
+//            영속성 컨텍스트가 항상 우위를 가짐
+//            따라서 벌크 연산 후 영속성 컨텍스트 동기화 필수!!
+        }
+    }
+
+    @Test
+    void bulkAdd() {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+        long count2 = queryFactory
+                .update(member)
+                .set(member.age, member.age.multiply(2))
+                .execute();
+
+    }
+
+    @Test
+    void bulkDelete() {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }
