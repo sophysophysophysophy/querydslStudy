@@ -728,4 +728,35 @@ public class QuerydslBasicTest {
                 .where(member.age.gt(18))
                 .execute();
     }
+    
+    @Test
+    void sqlFunction() {
+        List<String> result = queryFactory
+                .select(
+                        Expressions.stringTemplate(
+                                "function('replace', {0}, {1}, {2})", member.username,
+                                "member", "M"))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+//    DB에 사용자 정의 함수가 있을 경우, dialect 클래스 상속받은 클래스 생성하여 직접 등록을 해야 함 (JPA 기본편)
+    }
+
+    @Test
+    void sqlFunction2() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+//                .where(member.username.eq(Expressions.stringTemplate("function('lower', {0})", member.username)))
+                .where(member.username.eq(member.username.lower())) //기본적으로 모든 DB에서 제공하는 함수(ansi 표준)는 내장하고 있음
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
 }
