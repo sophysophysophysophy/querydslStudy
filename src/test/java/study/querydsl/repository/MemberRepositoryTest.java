@@ -10,6 +10,7 @@ import study.querydsl.dto.MemberSearchCondition;
 
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.entity.Member;
+import study.querydsl.entity.QMember;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
@@ -109,5 +110,31 @@ class MemberRepositoryTest {
 
         assertThat(result.getSize()).isEqualTo(3);
         assertThat(result.getContent()).extracting("username").containsExactly("member1", "member2", "member3");
+    }
+
+
+    @Test
+    public void querydslPredicateExecutorTest() {
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        em.persist(teamA);
+        em.persist(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 20, teamA);
+
+        Member member3 = new Member("member3", 30, teamB);
+        Member member4 = new Member("member4", 40, teamB);
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+//      join 불가. 조건(predicate)를 service level에서 인자로 넘겨야하기 때문에 구현체(querydsl) 의존성이 생김. -> 실무 사용 비권장
+        QMember member = QMember.member;
+        Iterable<Member> result = memberRepository.findAll(member.age.between(10, 40).and(member.username.eq("member1")));
+        for (Member resultMember : result) {
+            System.out.println("resultMember = " + resultMember);
+        }
     }
 }
